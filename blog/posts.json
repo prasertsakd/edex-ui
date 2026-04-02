@@ -1,0 +1,49 @@
+{
+    "posts": [
+        {
+            "id": "post-1",
+            "title": "Building a Sci-Fi Terminal UI for the Web",
+            "date": "2026-04-02",
+            "tags": ["web", "javascript", "css", "ui"],
+            "summary": "How we ported the eDEX-UI desktop aesthetic — augmented borders, theme system, animated panels — into a fully static web blog running in any modern browser.",
+            "file": "post-1.html",
+            "readTime": 6
+        },
+        {
+            "id": "post-2",
+            "title": "Web Serial API: Talking to Hardware from the Browser",
+            "date": "2026-03-20",
+            "tags": ["serial", "hardware", "javascript", "chrome"],
+            "summary": "The Web Serial API lets Chrome connect directly to serial ports — UARTs, Arduinos, RS-232 devices — without any native app. Here's how it works and how we integrated it into the terminal window.",
+            "file": "post-2.html",
+            "readTime": 8
+        },
+        {
+            "id": "post-3",
+            "title": "CSS Variables & Dynamic Theming Done Right",
+            "date": "2026-03-05",
+            "tags": ["css", "theming", "ui"],
+            "summary": "eDEX-UI ships 20+ themes defined as JSON files. We inject them into :root CSS variables at runtime — no Sass, no build step required. Here's the pattern.",
+            "file": "post-3.html",
+            "readTime": 4
+        },
+        {
+            "id": "post-4",
+            "title": "xterm.js: A Full Terminal Emulator in the Browser",
+            "date": "2026-02-18",
+            "tags": ["terminal", "xterm", "javascript", "linux"],
+            "summary": "xterm.js powers VS Code's integrated terminal and eDEX-UI's shell. We look at how to embed it in a web page, handle keyboard input, implement command history, and pipe it to a Web Serial device.",
+            "file": "post-4.html",
+            "readTime": 7
+        },
+        {
+            "id": "post-5",
+            "title": "Draggable Windows with Vanilla JS — No Framework Needed",
+            "date": "2026-02-01",
+            "tags": ["javascript", "ui", "ux"],
+            "summary": "Creating smooth, draggable floating windows with mouse and touch support using only vanilla JS. Port of the eDEX-UI modal system to a browser context.",
+            "file": "post-5.html",
+            "readTime": 5
+        }
+    ]
+}

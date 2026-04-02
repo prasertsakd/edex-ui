@@ -1,0 +1,97 @@
+<p>
+    <a href="https://xtermjs.org" target="_blank">xterm.js</a> is the open-source terminal
+    emulator that powers VS Code's integrated terminal, JupyterLab, and many other browser-based
+    tools. It implements a full VT100/xterm-compatible terminal — ANSI escape codes, color, cursor
+    movement, alternate screen buffer, mouse events — entirely in JavaScript.
+</p>
+
+<h2>Basic Setup</h2>
+
+<pre><code>&lt;!-- Load via CDN --&gt;
+&lt;link rel="stylesheet" href="https://unpkg.com/xterm@4/css/xterm.css"&gt;
+&lt;script src="https://unpkg.com/xterm@4/lib/xterm.js"&gt;&lt;/script&gt;
+
+&lt;div id="terminal"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+const term = new Terminal({
+    fontFamily: 'Fira Mono, monospace',
+    fontSize: 14,
+    cursorStyle: 'block',
+    cursorBlink: true,
+    theme: {
+        background: '#05080d',
+        foreground: '#aacfd1',
+        cursor:     '#aacfd1',
+    }
+});
+term.open(document.getElementById('terminal'));
+term.write('Hello, terminal!\r\n$ ');
+&lt;/script&gt;</code></pre>
+
+<h2>Handling Keyboard Input</h2>
+
+<p>
+    <code>term.onData(callback)</code> fires for every key press with the raw terminal sequence.
+    You need to implement your own line editor — buffering characters until Enter is pressed:
+</p>
+
+<pre><code>let inputBuf = '';
+
+term.onData(data => {
+    const code = data.charCodeAt(0);
+
+    if (code === 13) {              // Enter
+        term.write('\r\n');
+        processCommand(inputBuf.trim());
+        inputBuf = '';
+
+    } else if (code === 127) {      // Backspace
+        if (inputBuf.length > 0) {
+            inputBuf = inputBuf.slice(0, -1);
+            term.write('\b \b');    // erase character
+        }
+
+    } else if (code >= 32) {        // Printable characters
+        inputBuf += data;
+        term.write(data);
+    }
+});</code></pre>
+
+<h2>Command History</h2>
+
+<p>
+    Arrow keys send escape sequences (<code>\x1b[A</code> for up, <code>\x1b[B</code> for down).
+    A simple ring buffer gives you bash-style history:
+</p>
+
+<pre><code>const history = [];
+let histIdx = -1;
+
+// In onData handler:
+if (data === '\x1b[A' && histIdx &lt; history.length - 1) {
+    histIdx++;
+    replaceInput(history[histIdx]);
+} else if (data === '\x1b[B' && histIdx &gt; -1) {
+    histIdx = Math.max(-1, histIdx - 1);
+    replaceInput(histIdx &gt;= 0 ? history[histIdx] : '');
+}
+
+function replaceInput(next) {
+    term.write('\b \b'.repeat(inputBuf.length));
+    term.write(next);
+    inputBuf = next;
+}</code></pre>
+
+<h2>ANSI Escape Codes for Styling</h2>
+
+<pre><code>term.writeln('\x1b[1mBold text\x1b[0m');
+term.writeln('\x1b[32mGreen text\x1b[0m');
+term.writeln('\x1b[31mError message\x1b[0m');
+term.writeln('\x1b[33mWarning\x1b[0m');
+term.writeln('\x1b[2mDimmed\x1b[0m');</code></pre>
+
+<p>
+    Combined with Web Serial API (see the previous post), xterm.js gives you a complete
+    browser-based serial terminal — all without installing anything.
+</p>
