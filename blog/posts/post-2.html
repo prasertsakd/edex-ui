@@ -1,0 +1,95 @@
+<p>
+    For decades, talking to a serial port from a web page required a native helper app, a browser
+    extension, or a WebSocket bridge running on the user's machine. The
+    <strong>Web Serial API</strong> changes that — at least in Chromium-based browsers.
+    It lets a web page open a serial port directly, with the user's explicit permission.
+</p>
+
+<h2>Browser Support</h2>
+
+<p>
+    As of 2026, Web Serial is available in:
+</p>
+<ul>
+    <li>Google Chrome 89+</li>
+    <li>Microsoft Edge 89+</li>
+    <li>Opera 75+</li>
+</ul>
+<p>
+    Firefox and Safari do not support it. The API requires a secure context
+    (<code>https://</code> or <code>localhost</code>).
+</p>
+
+<h2>How It Works</h2>
+
+<pre><code>// 1. Request a port (shows a browser picker dialog)
+const port = await navigator.serial.requestPort();
+
+// 2. Open it
+await port.open({ baudRate: 9600 });
+
+// 3. Read incoming data
+const decoder = new TextDecoderStream();
+port.readable.pipeTo(decoder.writable);
+const reader = decoder.readable.getReader();
+
+while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    console.log('RX:', value);
+}
+
+// 4. Write data
+const encoder = new TextEncoderStream();
+encoder.readable.pipeTo(port.writable);
+const writer = encoder.writable.getWriter();
+await writer.write('AT\r\n');</code></pre>
+
+<h2>Integration with xterm.js</h2>
+
+<p>
+    Once you have the reader and writer streams, piping them through xterm.js is straightforward:
+    incoming data goes to <code>term.write()</code>, and xterm keyboard input goes to
+    <code>writer.write()</code>.
+</p>
+
+<pre><code>// Display incoming serial data in xterm
+(async () => {
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        term.write(value);          // raw bytes → terminal display
+    }
+})();
+
+// Send xterm keyboard input to serial port
+term.onData(data => writer.write(data));</code></pre>
+
+<p>
+    This gives you a functional serial terminal in the browser — suitable for debugging
+    microcontrollers, talking to GPS modules, or configuring network equipment over a console port.
+</p>
+
+<h2>Baud Rate and Port Options</h2>
+
+<p>
+    <code>port.open()</code> accepts the following options:
+</p>
+
+<pre><code>await port.open({
+    baudRate:  115200,   // bits per second
+    dataBits:  8,        // 7 or 8
+    stopBits:  1,        // 1 or 2
+    parity:    'none',   // 'none' | 'even' | 'odd'
+    bufferSize: 255,
+    flowControl: 'none'  // 'none' | 'hardware'
+});</code></pre>
+
+<h2>Click [ SERIAL PORT ] to Try It</h2>
+
+<p>
+    The terminal window in this blog has a <code>[ SERIAL PORT ]</code> button in its toolbar.
+    Clicking it calls <code>navigator.serial.requestPort()</code>. If you're on Chrome with a
+    device connected, you'll see it listed in the picker. Select it and the terminal will switch
+    into serial passthrough mode.
+</p>

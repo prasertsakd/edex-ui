@@ -1,0 +1,125 @@
+<p>
+    Floating, draggable windows are a staple of sci-fi UIs. eDEX-UI has a complete modal window
+    system: windows can be dragged by their title bar, stacked with z-index management, and closed
+    with a blink animation. Here's how to port that to a web page with vanilla JavaScript — no
+    React, no jQuery, no library.
+</p>
+
+<h2>Core Concept</h2>
+
+<p>
+    Dragging works by tracking the delta between consecutive mouse positions and adding that
+    delta to the window's <code>left</code> and <code>top</code> CSS properties. We listen on
+    <code>window</code> (not the element itself) during drag so fast mouse movement doesn't
+    escape the element boundary.
+</p>
+
+<pre><code>class BlogWindow {
+    constructor({ title, bodyHtml, width, height }) {
+        this.id   = crypto.randomUUID();
+        this.posX = (window.innerWidth  - parseInt(width))  / 2;
+        this.posY = (window.innerHeight - parseInt(height)) / 2;
+        this._build(title, bodyHtml, width, height);
+        this._initDrag();
+        this._animateOpen();
+    }
+
+    _el() { return document.getElementById(`bwin_${this.id}`); }
+}</code></pre>
+
+<h2>Building the DOM</h2>
+
+<pre><code>_build(title, bodyHtml, width, height) {
+    const el = document.createElement('div');
+    el.className = 'blog_window';
+    el.id = `bwin_${this.id}`;
+    el.style.cssText = `
+        width: ${width}; height: ${height};
+        left: ${this.posX}px; top: ${this.posY}px;
+        position: fixed; z-index: 500;
+    `;
+    el.innerHTML = `
+        &lt;div class="window_titlebar" id="titlebar_${this.id}"&gt;
+            &lt;h1&gt;${title}&lt;/h1&gt;
+            &lt;button onclick="this.closest('.blog_window')._winInstance.close()"&gt;[ X ]&lt;/button&gt;
+        &lt;/div&gt;
+        &lt;div class="window_body"&gt;${bodyHtml}&lt;/div&gt;
+    `;
+    el._winInstance = this;
+    document.getElementById('modal_layer').appendChild(el);
+}</code></pre>
+
+<h2>Mouse Drag Handler</h2>
+
+<pre><code>_initDrag() {
+    const el  = this._el();
+    const bar = document.getElementById(`titlebar_${this.id}`);
+    let startX, startY, startLeft, startTop;
+
+    const onMove = e => {
+        this.posX = startLeft + (e.clientX - startX);
+        this.posY = Math.max(0, startTop + (e.clientY - startY));
+        el.style.left = `${this.posX}px`;
+        el.style.top  = `${this.posY}px`;
+    };
+    const onUp = () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup',   onUp);
+    };
+    bar.addEventListener('mousedown', e => {
+        startX = e.clientX; startY = e.clientY;
+        startLeft = this.posX; startTop = this.posY;
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup',   onUp);
+    });
+}</code></pre>
+
+<h2>Open & Close Animations</h2>
+
+<pre><code>/* CSS */
+.blog_window {
+    transform: scale(0.88);
+    opacity: 0;
+    transition: transform .15s ease-out, opacity .15s ease-out;
+}
+.blog_window.window_open {
+    transform: scale(1);
+    opacity: 1;
+}
+.blog_window.window_closing {
+    animation: blink 0.1s linear infinite;
+}</code></pre>
+
+<pre><code>// JS - open animation
+_animateOpen() {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => this._el().classList.add('window_open'));
+    });
+}
+
+// JS - close with blink
+close() {
+    const el = this._el();
+    el.classList.add('window_closing');
+    setTimeout(() => el.remove(), 120);
+}</code></pre>
+
+<h2>Z-Index Management</h2>
+
+<p>
+    When a window is clicked, it should come to the front. Find the highest current z-index
+    among all open windows and set the focused window one higher:
+</p>
+
+<pre><code>focus() {
+    const maxZ = Object.values(window._openWindows).reduce((acc, w) => {
+        const z = parseInt(document.getElementById(`bwin_${w.id}`)?.style.zIndex || 500);
+        return Math.max(acc, z);
+    }, 500);
+    this._el().style.zIndex = maxZ + 1;
+}</code></pre>
+
+<p>
+    Add touch event support (<code>touchstart</code>, <code>touchmove</code>, <code>touchend</code>
+    with <code>changedTouches[0]</code>) and you have a window system that works on mobile too.
+</p>

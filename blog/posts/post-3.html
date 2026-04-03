@@ -1,0 +1,86 @@
+<p>
+    eDEX-UI ships 20+ themes — from the iconic cyan <em>tron</em> to matrix green, navy blue,
+    and the warm amber of <em>apollo</em>. Every theme is a small JSON file. At runtime, the
+    app reads the file and injects values into CSS custom properties. No Sass, no build step,
+    no class toggling.
+</p>
+
+<h2>The Theme JSON Format</h2>
+
+<pre><code>// tron.json
+{
+    "colors": {
+        "r": 170, "g": 207, "b": 209,
+        "black": "#000000",
+        "light_black": "#05080d",
+        "grey": "#262828"
+    },
+    "cssvars": {
+        "font_main": "United Sans Medium",
+        "font_main_light": "United Sans Light"
+    },
+    "terminal": {
+        "fontFamily": "Fira Mono",
+        "foreground": "#aacfd1",
+        "background": "#05080d",
+        "cursor": "#aacfd1"
+    }
+}</code></pre>
+
+<h2>Injecting Into :root</h2>
+
+<p>
+    The loader is deliberately simple — no framework, no library:
+</p>
+
+<pre><code>async function loadTheme(name) {
+    const t = await fetch(`themes/${name}.json`).then(r => r.json());
+    const s = document.documentElement.style;
+
+    // Primary accent color (used as rgb() triplet in CSS)
+    s.setProperty('--color_r', t.colors.r);
+    s.setProperty('--color_g', t.colors.g);
+    s.setProperty('--color_b', t.colors.b);
+
+    // Named colors
+    s.setProperty('--color_light_black', t.colors.light_black);
+    s.setProperty('--color_grey', t.colors.grey);
+
+    // Font families and other variables
+    for (const [key, val] of Object.entries(t.cssvars || {})) {
+        s.setProperty(`--${key}`, val);
+    }
+}</code></pre>
+
+<h2>Using the Variables in CSS</h2>
+
+<p>
+    The split RGB approach — storing <code>r</code>, <code>g</code>, <code>b</code> separately —
+    is the key trick. It lets you build <code>rgba()</code> values with dynamic alpha in pure CSS:
+</p>
+
+<pre><code>/* Solid accent color */
+color: rgb(var(--color_r), var(--color_g), var(--color_b));
+
+/* Semi-transparent version — no JS needed */
+background: rgba(var(--color_r), var(--color_g), var(--color_b), 0.15);
+
+/* Hover state */
+border: 1px solid rgba(var(--color_r), var(--color_g), var(--color_b), 0.6);</code></pre>
+
+<h2>Persisting the Selection</h2>
+
+<p>
+    We save the chosen theme to <code>localStorage</code> so it survives page reloads:
+</p>
+
+<pre><code>localStorage.setItem('blog_theme', name);
+
+// On boot:
+const saved = localStorage.getItem('blog_theme') || 'tron';
+await loadTheme(saved);</code></pre>
+
+<p>
+    The switcher in the header updates immediately — every color, border, glow, and font
+    in the interface responds because they all reference the same handful of CSS variables.
+</p>

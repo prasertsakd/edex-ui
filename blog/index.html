@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>eDEX :: BLOG</title>
+
+    <!-- augmented-ui (sci-fi borders) -->
+    <link rel="stylesheet" href="https://unpkg.com/augmented-ui@2/augmented.css" />
+    <!-- xterm.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/xterm@4.19.0/css/xterm.css" />
+
+    <!-- eDEX-UI original CSS (reused as-is) -->
+    <link rel="stylesheet" href="../src/assets/css/main.css" />
+    <link rel="stylesheet" href="../src/assets/css/modal.css" />
+    <link rel="stylesheet" href="../src/assets/css/mod_column.css" />
+    <link rel="stylesheet" href="../src/assets/css/mod_clock.css" />
+    <link rel="stylesheet" href="../src/assets/css/mod_sysinfo.css" />
+
+    <!-- Blog-specific CSS (overrides + new styles) -->
+    <link rel="stylesheet" href="blog.css" />
+</head>
+<body class="solidBackground">
+
+<!-- ===== HEADER ===== -->
+<header id="blog_header">
+    <div id="blog_title">
+        eDEX<span>::</span>BLOG
+        <span style="font-size:0.9vh; margin-left:1vh; opacity:0.35;">v1.0.0</span>
+    </div>
+
+    <div id="header_clock">--:--:--</div>
+
+    <div id="header_controls">
+        <select id="theme_switcher" title="Switch Theme">
+            <option value="tron">TRON</option>
+            <option value="matrix">MATRIX</option>
+            <option value="navy">NAVY</option>
+            <option value="blade">BLADE</option>
+            <option value="red">RED</option>
+            <option value="apollo">APOLLO</option>
+            <option value="nord">NORD</option>
+            <option value="cyborg">CYBORG</option>
+            <option value="interstellar">INTERSTELLAR</option>
+        </select>
+        <button class="header_btn" onclick="openNotepad()">[ NOTEPAD ]</button>
+        <button class="header_btn" onclick="openTerminal()">[ TERMINAL ]</button>
+    </div>
+</header>
+
+<!-- ===== 3-COLUMN LAYOUT ===== -->
+<div id="blog_layout">
+
+    <!-- LEFT SIDEBAR -->
+    <section class="mod_column" id="mod_column_left">
+
+        <div class="sidebar_panel" augmented-ui="tl-clip br-clip border">
+            <h3 class="panel_title">// AUTHOR</h3>
+            <p style="font-size:1.5vh; margin-bottom:0.5vh;">ADMIN_USER</p>
+            <p>Software developer & system enthusiast. Writing about Linux, embedded systems, and open source.</p>
+            <p style="margin-top:0.8vh; opacity:0.5; font-size:1vh;">
+                <span id="author_uptime">UPTIME: --</span>
+            </p>
+        </div>
+
+        <div class="sidebar_panel" augmented-ui="tl-clip border">
+            <h3 class="panel_title">// BLOG STATS</h3>
+            <div class="stat_grid">
+                <div class="stat_item">
+                    <span class="stat_label">POSTS</span>
+                    <span class="stat_value" id="stat_posts">0</span>
+                </div>
+                <div class="stat_item">
+                    <span class="stat_label">TAGS</span>
+                    <span class="stat_value" id="stat_tags">0</span>
+                </div>
+                <div class="stat_item">
+                    <span class="stat_label">YEAR</span>
+                    <span class="stat_value" id="stat_year">2026</span>
+                </div>
+                <div class="stat_item">
+                    <span class="stat_label">STATUS</span>
+                    <span class="stat_value" style="font-size:1.1vh; color:rgb(var(--color_r),var(--color_g),var(--color_b));">ONLINE</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar_panel" augmented-ui="br-clip border">
+            <h3 class="panel_title">// TAGS</h3>
+            <div id="tag_list"></div>
+        </div>
+
+        <div class="sidebar_panel">
+            <h3 class="panel_title">// SYSTEM TIME</h3>
+            <div id="mod_clock" style="height:auto; padding:0; border:none;">
+                <h1 id="clock_h1" style="font-size:2.8vh;">--:--:--</h1>
+            </div>
+            <p id="clock_date" style="font-size:1vh; opacity:0.45; margin-top:0.5vh;"></p>
+        </div>
+
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <main id="main_content" augmented-ui="tl-clip br-clip border">
+
+        <!-- Post List -->
+        <div id="post_list">
+            <div style="font-family:var(--font_main_light); font-size:1.1vh; opacity:0.4; margin-bottom:1.5vh; letter-spacing:0.15vh;">
+                LOADING POSTS...
+            </div>
+        </div>
+
+        <!-- Single Post View -->
+        <div id="post_view">
+            <button id="post_back_btn" onclick="showPostList()">← BACK TO INDEX</button>
+            <div class="article_header">
+                <h1 id="post_title"></h1>
+                <div class="article_meta" id="post_meta"></div>
+                <div id="post_tags" style="margin-top:0.6vh;"></div>
+            </div>
+            <div class="article_body" id="post_body"></div>
+        </div>
+
+    </main>
+
+    <!-- RIGHT SIDEBAR -->
+    <section class="mod_column" id="mod_column_right">
+
+        <div class="sidebar_panel" augmented-ui="tr-clip border">
+            <h3 class="panel_title">// SEARCH</h3>
+            <input type="text" id="search_box" placeholder="SEARCH POSTS..." oninput="searchPosts(this.value)" />
+        </div>
+
+        <div class="sidebar_panel" augmented-ui="tr-clip br-clip border">
+            <h3 class="panel_title">// RECENT POSTS</h3>
+            <ul id="recent_posts_list" style="list-style:none; padding:0; margin:0;"></ul>
+        </div>
+
+        <div class="sidebar_panel">
+            <h3 class="panel_title">// CATEGORIES</h3>
+            <ul id="categories_list" style="list-style:none; padding:0; margin:0;"></ul>
+        </div>
+
+        <div class="sidebar_panel" augmented-ui="bl-clip border">
+            <h3 class="panel_title">// OPEN WINDOWS</h3>
+            <div id="open_windows_list" style="font-size:1vh; opacity:0.5; font-family:var(--font_main_light);">
+                NO ACTIVE WINDOWS
+            </div>
+        </div>
+
+    </section>
+
+</div>
+
+<!-- ===== WINDOW LAYER ===== -->
+<div id="modal_layer"></div>
+
+<!-- xterm.js library -->
+<script src="https://unpkg.com/xterm@4.19.0/lib/xterm.js"></script>
+
+<!-- Blog scripts -->
+<script src="windows/notepad.js"></script>
+<script src="windows/terminal.js"></script>
+<script src="blog.js"></script>
+
+</body>
+</html>

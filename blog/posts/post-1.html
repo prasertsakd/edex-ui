@@ -1,0 +1,85 @@
+<p>
+    eDEX-UI started as a desktop application built on Electron — a full-screen sci-fi terminal
+    interface with real system monitoring, a virtual keyboard, a 3D globe, and an xterm.js shell.
+    The question we asked ourselves: <em>can we strip away all the native parts and keep just the aesthetic?</em>
+</p>
+
+<h2>What Makes eDEX-UI Look the Way It Does</h2>
+
+<p>
+    Surprisingly, almost everything visual in eDEX-UI is plain DOM and CSS. There's no Canvas
+    rendering (except the globe, which we dropped). The entire layout is flexbox. Colors are driven
+    by CSS variables injected at runtime from JSON theme files. Even the sci-fi border style —
+    those distinctive clipped corners — comes from a small CSS library called
+    <code>augmented-ui</code>.
+</p>
+
+<pre><code>/* augmented-ui in action */
+section {
+    --aug-border: 0.2vh;
+    --aug-border-bg: rgb(170, 207, 209);
+    --aug-inset: 5px;
+}</code></pre>
+
+<p>
+    This meant the conversion to a static web page was mostly about <strong>removing</strong>
+    things rather than rewriting them. We removed the Electron IPC calls, the Node.js
+    <code>systeminformation</code> backend, <code>node-pty</code>, and all the Electron-specific
+    APIs. The CSS we mostly kept intact.
+</p>
+
+<h2>The Three-Column Layout</h2>
+
+<p>
+    eDEX-UI uses three sections side by side: a left info panel (17%), the central terminal (65%),
+    and a right info panel (17%). For the blog, this maps naturally to:
+</p>
+
+<ul>
+    <li><strong>Left sidebar</strong> — author info, blog stats, tags, clock</li>
+    <li><strong>Main content</strong> — post list or article body</li>
+    <li><strong>Right sidebar</strong> — search, recent posts, categories, open windows</li>
+</ul>
+
+<p>
+    The original CSS uses <code>position: absolute</code> for the side panels because they need
+    to sit precisely relative to the Electron window. In the blog we override that with normal
+    flexbox flow so the layout scrolls and adapts to the browser viewport.
+</p>
+
+<h2>Theme System</h2>
+
+<p>
+    Each eDEX-UI theme is a JSON file with RGB color values, font names, and terminal colors.
+    We load the selected theme at boot and inject the values into <code>:root</code> as CSS
+    custom properties. The entire UI re-colors instantly:
+</p>
+
+<pre><code>async function loadTheme(name) {
+    const t = await fetch(`themes/${name}.json`).then(r => r.json());
+    const s = document.documentElement.style;
+    s.setProperty('--color_r', t.colors.r);
+    s.setProperty('--color_g', t.colors.g);
+    s.setProperty('--color_b', t.colors.b);
+    // ...
+}</code></pre>
+
+<h2>Boot Animation</h2>
+
+<p>
+    The original app reveals panels with staggered 500ms intervals, each triggering a CSS
+    <code>fadeIn</code> keyframe animation. We preserved this by controlling
+    <code>animation-play-state</code> via JavaScript:
+</p>
+
+<pre><code>// Stagger left and right panel items
+for (let i = 0; i &lt; maxLen; i++) {
+    await delay(400);
+    leftItems[i]?.style.setProperty('animation-play-state', 'running');
+    rightItems[i]?.style.setProperty('animation-play-state', 'running');
+}</code></pre>
+
+<p>
+    The result is a blog that boots like a terminal application — panels materializing one by
+    one out of the dark background, with the sci-fi aesthetic fully intact.
+</p>
